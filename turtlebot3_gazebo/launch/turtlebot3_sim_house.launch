@@ -4,6 +4,7 @@
   <arg name="y_pos" default="1.0"/>
   <arg name="z_pos" default="0.0"/>
   <arg name="map_file" default="$(find turtlebot3_gazebo)/maps/house.yaml"/>
+  <arg name="cmd_vel_mux_file"  default="$(find jdq_3sr_aether_navigation)/config/twist_mux.yaml"/>
 
   <include file="$(find gazebo_ros)/launch/empty_world.launch">
     <arg name="world_name" value="$(find turtlebot3_gazebo)/worlds/turtlebot3_house.world"/>
@@ -19,14 +20,37 @@
     <param name="publish_frequency" type="double" value="50.0" />
   </node>
 
+  <!-- gazebo sim robot -->
   <node name="spawn_urdf" pkg="gazebo_ros" type="spawn_model" args="-urdf -model turtlebot3 -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -param robot_description" />  
   <!-- <include file="$(find turtlebot3_fake)/launch/turtlebot3_fake.launch" /> -->
   <!-- <node name="base_link_to_footprint_tf_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_footprint base_link 100" /> -->
 
-  <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-    <arg name="map_file" value="$(arg map_file)"/>
-  </include>
+  <!-- Map server -->
+  <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)"/>
 
+  <!-- AMCL -->
+  <include file="$(find turtlebot3_navigation)/launch/amcl.launch"/>
+
+  <!-- move_base -->
+  <group>
+    <include file="$(find turtlebot3_navigation)/launch/move_base.launch">
+      <arg name="model" value="$(arg model)" />
+      <arg name="cmd_vel_topic" value="cmd_vel_mux/input/navi" />
+    </include>
+  </group>
+  
+  <!-- rviz  -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_sim_house.rviz"/>
+
+  <!-- spawn mobile base nodelet manager -->
+  <node pkg="nodelet" type="nodelet" name="mobile_base_nodelet_manager" args="manager"/>
+  
+  <!-- velocity commands multiplexer-->
+  <node pkg="nodelet" type="nodelet" name="cmd_vel_mux" args="load yocs_cmd_vel_mux/CmdVelMuxNodelet mobile_base_nodelet_manager">
+    <param name="yaml_cfg_file" value="$(arg cmd_vel_mux_file)"/> 
+    <remap from="cmd_vel_mux/output" to="cmd_vel"/>
+  </node> 
+
+    <!-- <remap from="cmd_vel" to="cmd_vel_mux/input/safety_controller"/> -->
   
 </launch>
