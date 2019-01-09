@@ -24,7 +24,7 @@
   <!-- <node name="base_link_to_footprint_tf_publisher" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 base_footprint base_link 100" /> -->
 
   <include file="$(find turtlebot3_navigation)/launch/turtlebot3_navigation.launch">
-    <arg name="map_file" value="$(arg map_flie)"/>
+    <arg name="map_file" value="$(arg map_file)"/>
   </include>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find turtlebot3_gazebo)/rviz/turtlebot3_sim_house.rviz"/>
